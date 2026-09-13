@@ -1,0 +1,29 @@
+{
+  "revision": "0efa2ec",
+  "sources": [
+    {
+      "path": "lib/agent-signature.ts",
+      "sha256": "22f860b573ccb24b4ca84d66a6dd8624fc97bade683092a339648e6d5111c560"
+    },
+    {
+      "path": "lib/steal-the-vfy/resolver.ts",
+      "sha256": "994d30063c0d64662bd4a09aba899b73832fbdb90a43bac8aea325a12d7619c0"
+    },
+    {
+      "path": "lib/gatekeeper/traps.ts",
+      "sha256": "0d813c8760161bb38c45f001bd35a74e36bbc95b7cbfab1be2f09ac70e7b396d"
+    },
+    {
+      "path": "app/actions/dispatch-vfy-practice.ts",
+      "sha256": "85d68d9e74e579d96bcefbd8154b16ab2570b53ded2f75e48466f1e48f0337fe"
+    },
+    {
+      "path": "lib/steal-the-vfy/match-engine.ts",
+      "sha256": "005ced7d69187e663bfbc209ce941904bd34007e6b8511364194df80dbb7c191"
+    },
+    {
+      "path": "lib/task-delivery.ts",
+      "sha256": "d4f0ac9aefc53186bfd711c4b2b2949121ca7065ab73abe9b7b938fb41d73ded"
+    }
+  ]
+}
