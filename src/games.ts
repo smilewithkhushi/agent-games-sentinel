@@ -25,24 +25,25 @@ export function decideVfy(self: bigint | string, opponent: bigint | string) {
   if (values.some(v => v.length > 256 || !/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(v))) throw new Error('Invalid balance');
   const places = Math.max(...values.map(v => v.split('.')[1]?.length ?? 0));
   const scale = 10n ** BigInt(places);
-  const [a, b] = values.map(v => {
+  const [, b] = values.map(v => {
     const [whole, fraction = ''] = v.split('.');
     return BigInt(whole!) * scale + BigInt(fraction.padEnd(places, '0') || '0');
   });
-  if (a! < 10n * scale) return { type: 'HOLD' } as const;
-  if (b! - a! >= 15n * scale) return { type: 'FORTIFY' } as const;
-  return { type: 'EXTRACT', amount: 5 } as const;
+  // EXTRACT 10 weakly dominates all alternatives against every opponent action (see decisions.md D012).
+  // HOLD only when opponent balance is zero — nothing to extract, nothing that can be extracted from us.
+  if (b! === 0n) return { type: 'HOLD' } as const;
+  return { type: 'EXTRACT', amount: 10 } as const;
 }
-export type VfyAction = ReturnType<typeof decideVfy>;
+// Explicit protocol type covering all possible actions, not just what this agent emits.
+export type VfyAction = { type: 'HOLD' } | { type: 'FORTIFY' } | { type: 'EXTRACT'; amount: number };
 export const CIRCUIT_VERSION = 'reference-test-v1';
 // Fixed ordered serialization is part of this reference-test convention.
 export const POLICY_JSON = JSON.stringify({
-  policyVersion: 'reference-policy-v1',
+  policyVersion: 'reference-policy-v2',
   circuitVersion: CIRCUIT_VERSION,
   rules: [
-    { when: 'selfBalance < 10', action: 'HOLD' },
-    { when: 'opponentBalance - selfBalance >= 15', action: 'FORTIFY' },
-    { when: 'otherwise', action: 'EXTRACT', amount: 5 },
+    { when: 'opponentBalance == 0', action: 'HOLD' },
+    { when: 'otherwise', action: 'EXTRACT', amount: 10 },
   ],
 });
 export const STRATEGY_COMMITMENT = `0x${digest(POLICY_JSON)}`;

@@ -34,8 +34,12 @@ test('platform preflight is signed protocol-v1 JSON, and replay is identical', a
     assert.equal(first.body, second.body);
 });
 for (const mode of ['practice', 'competition'] as const) {
-    for (const [self, opponent, action] of [['9.999', '100', { type: 'HOLD' }], ['10.5', '25.5', { type: 'FORTIFY' }], ['10.5', '25.499999999999999999', { type: 'EXTRACT', amount: 5 }]] as const) {
-        test(`${mode} VFY ${action.type} passes the platform's actual strict response schema`, async (t) => {
+    for (const [self, opponent, action, label] of [
+        ['100', '100', { type: 'EXTRACT', amount: 10 }, 'normal'],
+        ['1', '100', { type: 'EXTRACT', amount: 10 }, 'low-self-still-extracts'],
+        ['100', '0', { type: 'HOLD' }, 'depleted-opponent'],
+    ] as const) {
+        test(`${mode} VFY ${label} passes the platform's actual strict response schema`, async (t) => {
             const app = setup();
             t.after(() => app.close());
             const payload = vfy(mode, self, opponent);
