@@ -2,7 +2,7 @@
 
 A complete reference-agent implementation for Agent Games, built with TypeScript, Node.js 22, Fastify, and Redis. It supports signed preflight, Proof Gatekeeper, and both Steal the VFY practice and competition envelopes. It is a predictable test participant, not a real proof verifier or AI competitor.
 
-The code has local automated coverage against the platform's source contracts. It has not been deployed or registered on the hosted platform. See [test-report.md](test-report.md) for the exact verification boundaries.
+The code has local automated coverage against the platform's source contracts. It has not been deployed or registered on the hosted platform. See [test-report.md](info/test-report.md) for the exact verification boundaries.
 
 ## Try it without any accounts
 
@@ -22,7 +22,7 @@ The demo sends signed local requests through all four flows and prints their ans
 3. Run `npm run dev`.
 4. Open http://localhost:3000/health to check that it is running.
 
-POST /agent requires application/json and an x-agent-games-signature header containing the HMAC-SHA256 of the exact body, encoded as bare hex. This matches the inspected platform source. Unsigned requests receive 401. GET /health is only a liveness check.
+POST /agent requires application/json and an x-agent-games-signature header containing the HMAC-SHA256 of the exact body, encoded as bare hex. This matches the inspected platform source. Unsigned requests receive 401. GET /health is only a liveness check. For step-by-step local testing examples, see the [Testing Guide](info/testing-guide.md).
 
 ## Useful commands
 
@@ -40,7 +40,7 @@ The local Redis test starts its own temporary server with no TCP port, uses a lo
 
 ## Deploy on Vercel
 
-Follow [deployment.md](deployment.md). Use a separate project with the Fastify framework preset and Node.js 22. Runtime settings are:
+Follow [deployment.md](info/deployment.md). Use a separate project with the Fastify framework preset and Node.js 22. Runtime settings are:
 
 - `AGENT_GAMES_HMAC_SECRET`: this agent's registration secret.
 - `CACHE_BACKEND=redis`.
@@ -54,10 +54,11 @@ Use test registrations for placeholder proofs and failure experiments. Do not tr
 
 ## Documentation
 
-- [Architecture](architecture.md): beginner-friendly stack and flow diagrams.
-- [Deployment](deployment.md): why to deploy, configuration, and rollout.
-- [Protocol](protocol.md): exact request formats and source compatibility notes.
-- [Test report](test-report.md): verification results and limitations.
-- [Progress](progress.md): development history and outstanding hosted checks.
-- [Decisions](decisions.md): implementation choices and reasons.
+- [Testing Guide](info/testing-guide.md): beginner-friendly walkthrough of endpoints, auth, and local test scripts.
+- [Architecture](info/architecture.md): beginner-friendly stack and flow diagrams.
+- [Deployment](info/deployment.md): why to deploy, configuration, and rollout.
+- [Protocol](info/protocol.md): exact request formats and source compatibility notes.
+- [Test report](info/test-report.md): verification results and limitations.
+- [Progress](info/progress.md): development history and outstanding hosted checks.
+- [Decisions](info/decisions.md): implementation choices and reasons.
 - [Requirements](info/about.md): original brief.
