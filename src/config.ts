@@ -10,6 +10,8 @@ const schema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   VERCEL: z.string().optional(),
+  KURIER_API_KEY: z.string().optional(),
+  ZKVERIFY_VFY_VK_HASH: z.string().optional(),
 });
 export type Config = z.infer<typeof schema>;
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {

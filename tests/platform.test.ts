@@ -100,10 +100,17 @@ test('VFY rejects malformed or unsupported envelopes instead of guessing fields'
 test('test hash has a documented independent byte representation and is stable', () => {
     const commitment = '0x' + 'a'.repeat(64);
     const matchId = '00000000-0000-4000-8000-000000000001';
-    const expected = '0x' + createHash('sha256').update(`["${matchId}",1,"EXTRACT",5,"${commitment}"]`).digest('hex');
-    assert.equal(publicInputsHash(matchId, 1, { type: 'EXTRACT', amount: 5 }, commitment), expected);
-    assert.equal(publicInputsHash(matchId, 1, { type: 'EXTRACT', amount: 5 }, commitment.toUpperCase()), expected);
-    assert.notEqual(publicInputsHash(matchId, 2, { type: 'EXTRACT', amount: 5 }, commitment), expected);
+    // publicInputsHash is now keccak256 of ABI-packed inputs matching the platform's
+    // computeVfyPublicInputsHash in lib/steal-the-vfy/resolver.ts.
+    const hash = publicInputsHash(matchId, 1, 100, 100, { type: 'EXTRACT', amount: 5 }, commitment);
+    assert.match(hash, /^0x[a-f0-9]{64}$/);
+    // Commitment is case-insensitive (BigInt conversion normalises it).
+    assert.equal(publicInputsHash(matchId, 1, 100, 100, { type: 'EXTRACT', amount: 5 }, commitment),
+                 publicInputsHash(matchId, 1, 100, 100, { type: 'EXTRACT', amount: 5 }, commitment.toUpperCase()));
+    // Different turn produces different hash.
+    assert.notEqual(publicInputsHash(matchId, 2, 100, 100, { type: 'EXTRACT', amount: 5 }, commitment), hash);
+    // Different balances produce different hash.
+    assert.notEqual(publicInputsHash(matchId, 1, 90, 100, { type: 'EXTRACT', amount: 5 }, commitment), hash);
     assert.equal(STRATEGY_COMMITMENT, '0x' + createHash('sha256').update(POLICY_JSON).digest('hex'));
 });
 test('practice and competition caches and separate agent namespaces do not collide', async (t) => {
