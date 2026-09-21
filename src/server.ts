@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from './application.js';
 import { readConfig } from './config.js';
-export const config = { maxDuration: 30 };
 const runtimeConfig = readConfig();
 const app: FastifyInstance = buildApp(runtimeConfig, { logger: true });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

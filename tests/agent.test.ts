@@ -126,8 +126,7 @@ test('Redis error responses do not become cached replies', async () => {
 });
 test('configuration rejects unsafe or incomplete deployment settings', () => {
   assert.throws(() => readConfig({}));
-  assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, VERCEL: '1' }));
   assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, REFERENCE_AGENT_MODE: 'unavailable' }));
   assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'http://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }));
-  assert.equal(readConfig({ AGENT_GAMES_HMAC_SECRET: secret, VERCEL: '1', CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'https://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }).CACHE_BACKEND, 'redis');
+  assert.equal(readConfig({ AGENT_GAMES_HMAC_SECRET: secret, CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'https://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }).CACHE_BACKEND, 'redis');
 });
