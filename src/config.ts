@@ -9,14 +9,14 @@ const schema = z.object({
   AGENT_NAMESPACE: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/).default('reference-local'),
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  VERCEL: z.string().optional(),
+  KURIER_API_KEY: z.string().optional(),
+  ZKVERIFY_VFY_VK_HASH: z.string().optional(),
 });
 export type Config = z.infer<typeof schema>;
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = schema.safeParse(env);
   if (!result.success) throw new Error('Invalid configuration: ' + result.error.issues.map(i => i.path.join('.')).join(', '));
   const config = result.data;
-  if (config.VERCEL && config.CACHE_BACKEND !== 'redis') throw new Error('Vercel requires CACHE_BACKEND=redis');
   if (config.CACHE_BACKEND === 'redis') {
     let url: URL;
     try { url = new URL(config.UPSTASH_REDIS_REST_URL ?? ''); } catch { throw new Error('Invalid Redis URL'); }

@@ -28,13 +28,18 @@ export function buildApp(config: Config, options: { store?: ReplayStore; logger?
     reply.code(code).send({ error: code === 413 ? 'BODY_TOO_LARGE' : code === 415 ? 'UNSUPPORTED_MEDIA_TYPE' : 'REQUEST_FAILED' });
   });
   app.get('/health', async () => ({ ok: true }));
+  const vfyCtx = {
+    hmacSecret: config.AGENT_GAMES_HMAC_SECRET,
+    kurierApiKey: config.KURIER_API_KEY,
+    zkverifyVfyVkHash: config.ZKVERIFY_VFY_VK_HASH,
+  };
   app.post('/agent', async (request, reply) => {
     const raw = request.body;
     if (!Buffer.isBuffer(raw) || !verify(raw, request.headers['x-agent-games-signature'], config.AGENT_GAMES_HMAC_SECRET)) return reply.code(401).send({ error: 'UNAUTHORIZED' });
     let payload: unknown;
     try { payload = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)); }
     catch { return reply.code(400).send({ error: 'INVALID_JSON' }); }
-    const task = prepareTask(payload);
+    const task = prepareTask(payload, vfyCtx);
     if (!task) return reply.code(400).send({ error: 'INVALID_REQUEST' });
     const expired = task.deadline <= Date.now();
     const key = `{${digest(namespace)}}:${task.family}:${task.cacheId}`;
@@ -49,7 +54,7 @@ export function buildApp(config: Config, options: { store?: ReplayStore; logger?
     try {
       let record = await store.get(key);
       if (!record) {
-        record = await store.putIfAbsent(key, encode(task.createResponse()), task.proofId && task.reusedResponse ? {
+        record = await store.putIfAbsent(key, encode(await task.createResponse()), task.proofId && task.reusedResponse ? {
           proofKey: `{${digest(namespace)}}:proof:${task.proofId}`,
           reused: encode(task.reusedResponse),
         } : undefined);

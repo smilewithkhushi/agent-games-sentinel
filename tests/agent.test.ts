@@ -91,10 +91,11 @@ test('cache outages fail safely', async t => {
   assert.equal(response.statusCode, 503); assert.equal(response.body.includes('sensitive'), false);
 });
 test('VFY action boundaries', () => {
-  assert.deepEqual(decideVfy(9n, 100n), { type: 'HOLD' });
-  assert.deepEqual(decideVfy(10n, 25n), { type: 'FORTIFY' });
-  assert.deepEqual(decideVfy(10n, 24n), { type: 'EXTRACT', amount: 5 });
-  assert.deepEqual(decideVfy(30n, 0n), { type: 'EXTRACT', amount: 5 });
+  assert.deepEqual(decideVfy(0n, 100n), { type: 'EXTRACT', amount: 10 });  // EXTRACT even at zero self
+  assert.deepEqual(decideVfy(9n, 100n), { type: 'EXTRACT', amount: 10 });  // no HOLD threshold
+  assert.deepEqual(decideVfy(100n, 25n), { type: 'EXTRACT', amount: 10 }); // no FORTIFY threshold
+  assert.deepEqual(decideVfy('10.5', '25.499999999999999999'), { type: 'EXTRACT', amount: 10 });
+  assert.deepEqual(decideVfy(30n, 0n), { type: 'HOLD' });                  // opponent depleted
   assert.throws(() => decideVfy(-1n, 0n));
 });
 test('memory cache expiration and capacity preserve unexpired replies', async () => {
@@ -125,8 +126,7 @@ test('Redis error responses do not become cached replies', async () => {
 });
 test('configuration rejects unsafe or incomplete deployment settings', () => {
   assert.throws(() => readConfig({}));
-  assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, VERCEL: '1' }));
   assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, REFERENCE_AGENT_MODE: 'unavailable' }));
   assert.throws(() => readConfig({ AGENT_GAMES_HMAC_SECRET: secret, CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'http://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }));
-  assert.equal(readConfig({ AGENT_GAMES_HMAC_SECRET: secret, VERCEL: '1', CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'https://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }).CACHE_BACKEND, 'redis');
+  assert.equal(readConfig({ AGENT_GAMES_HMAC_SECRET: secret, CACHE_BACKEND: 'redis', UPSTASH_REDIS_REST_URL: 'https://example.com', UPSTASH_REDIS_REST_TOKEN: 'token' }).CACHE_BACKEND, 'redis');
 });

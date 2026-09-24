@@ -6,4 +6,19 @@ dist/
 .vercel/
 coverage/
 
+# Dev notes (not part of the project)
 info/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor dirs
+.idea/
