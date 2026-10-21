@@ -16,6 +16,9 @@ Thumbs.db
 # TypeScript incremental build cache
 *.tsbuildinfo
 
+# Exported verification keys (re-derivable from .zkey, registered by hash)
+*vkey*.json
+
 # Logs
 *.log
 npm-debug.log*
