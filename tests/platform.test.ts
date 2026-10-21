@@ -50,7 +50,7 @@ for (const mode of ['practice', 'competition'] as const) {
             assert.equal(response.matchId, payload.matchId);
             assert.equal(response.turn, payload.turn);
             assert.deepEqual(response.action, action);
-            assert.equal(response.policyProof.circuitVersion, 'reference-test-v1');
+            assert.equal(response.policyProof.circuitVersion, 'v1');
             assert.match(response.policyProof.publicInputsHash, /^0x[a-f0-9]{64}$/);
             if (mode === 'practice')
                 assert.equal('agentTimestamp' in res.json(), false);

@@ -70,7 +70,10 @@ export function decideVfy(self: bigint | string, opponent: bigint | string) {
 }
 // Explicit protocol type covering all possible actions, not just what this agent emits.
 export type VfyAction = { type: 'HOLD' } | { type: 'FORTIFY' } | { type: 'EXTRACT'; amount: number };
-export const CIRCUIT_VERSION = 'reference-test-v1';
+// The platform's VFY protocol recognizes 'v1' (see VFY_CIRCUIT_VERSION_INTEGERS
+// below and the Steal the VFY registration form). Emitting any other label makes
+// the platform reject the response as invalid VFY protocol JSON.
+export const CIRCUIT_VERSION = 'v1';
 // Fixed ordered serialization is part of this reference-test convention.
 export const POLICY_JSON = JSON.stringify({
   policyVersion: 'reference-policy-v2',
