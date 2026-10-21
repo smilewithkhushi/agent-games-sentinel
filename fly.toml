@@ -1,14 +1,15 @@
-# fly.toml app configuration file generated for agent-sentinel on 2026-09-24T19:17:46+05:30
+# fly.toml app configuration file generated for agent-games-sentinel on 2026-10-21T06:05:16Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'agent-sentinel'
-primary_region = 'gru'
+app = 'agent-games-sentinel'
+primary_region = 'ams'
 
 [build]
+
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
