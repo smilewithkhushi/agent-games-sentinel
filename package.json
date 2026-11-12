@@ -17,7 +17,7 @@
     "demo": "node --import tsx scripts/demo.ts",
     "play": "node --import tsx scripts/play.ts",
     "play:gatekeeper": "node --import tsx scripts/play.ts gatekeeper",
-    "commitment": "node --import tsx scripts/commitment.ts",
+    "commitment": "node --env-file-if-exists=.env --import tsx scripts/commitment.ts",
     "test:http": "node --import tsx --test tests/integration/http.test.ts"
   },
   "dependencies": {

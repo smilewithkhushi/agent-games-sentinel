@@ -2,7 +2,7 @@
 
 A complete reference-agent implementation for Agent Games, built with TypeScript, Node.js 22, Fastify, and Redis. It supports signed preflight, Proof Gatekeeper, and both Steal the VFY practice and competition envelopes. It is a predictable test participant, not a real proof verifier or AI competitor.
 
-The code has local automated coverage against the platform's source contracts. It has not been deployed or registered on the hosted platform. See [test-report.md](info/test-report.md) for the exact verification boundaries.
+The code has local automated coverage against the platform's source contracts, and is deployed on Fly.io and registered on the hosted platform (Steal the VFY). See [test-report.md](info/test-report.md) for the exact verification boundaries.
 
 ## Try it without any accounts
 
@@ -38,19 +38,57 @@ POST /agent requires application/json and an x-agent-games-signature header cont
 
 The local Redis test starts its own temporary server with no TCP port, uses a local socket, and cleans up afterward. It never touches an existing Redis database. The HTTP tests start temporary loopback servers and close them afterward.
 
-## Deploy on Vercel
+## Deploy on Fly.io
 
-Follow [deployment.md](info/deployment.md). Use a separate project with the Fastify framework preset and Node.js 22. Runtime settings are:
+Follow [deployment.md](info/deployment.md). The app is defined in `fly.toml` (app `agent-games-sentinel`, primary region `gru`) and built from the multi-stage `Dockerfile` (Node.js 22, entrypoint `dist/src/server.js`). The container listens on port 3000; Fly's `http_service` terminates TLS and forces HTTPS, so the public endpoint is HTTPS on 443 as the platform requires.
 
-- `AGENT_GAMES_HMAC_SECRET`: this agent's registration secret.
-- `CACHE_BACKEND=redis`.
+First-time setup:
+
+```sh
+flyctl launch --no-deploy   # only if the app does not exist yet; fly.toml is already committed
+flyctl deploy
+```
+
+Set runtime configuration as Fly secrets (never commit them):
+
+```sh
+flyctl secrets set \
+  AGENT_GAMES_HMAC_SECRET=... \
+  CACHE_BACKEND=redis \
+  AGENT_NAMESPACE=reference-prod \
+  UPSTASH_REDIS_REST_URL=... \
+  UPSTASH_REDIS_REST_TOKEN=... \
+  KURIER_API_KEY=... \
+  ZKVERIFY_VFY_VK_HASH=... \
+  REFERENCE_AGENT_MODE=normal \
+  REFERENCE_AGENT_DELAY_MS=0
+```
+
+- `AGENT_GAMES_HMAC_SECRET`: this agent's registration secret. The Poseidon commitment you register is derived from it, so it must match across `.env`, Fly, and the value used by `npm run commitment`.
+- `CACHE_BACKEND=redis`: recommended so idempotent replays survive across machines when `fly.toml` runs more than one machine.
 - `AGENT_NAMESPACE`: unique to the registration and environment.
-- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: private Redis credentials.
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: private Redis credentials (only when `CACHE_BACKEND=redis`).
+- `KURIER_API_KEY`: Kurier testnet API key, used to submit Groth16 proofs to the zkVerify relay for competition matches.
+- `ZKVERIFY_VFY_VK_HASH`: the verification-key hash returned when the VFY circuit's key is registered on zkVerify (see "Register with Agent Games" below).
 - `REFERENCE_AGENT_MODE=normal` and `REFERENCE_AGENT_DELAY_MS=0`.
 
-The entrypoint is src/server.ts. The factory lives in src/application.ts so Vercel cannot select it as another server entrypoint. The function duration is 30 seconds. A local Vercel Fastify builder check succeeded; publishing and live platform checks remain separate tasks.
+Competition proofs are only generated and submitted when `AGENT_GAMES_HMAC_SECRET`, `KURIER_API_KEY`, and `ZKVERIFY_VFY_VK_HASH` are all set; otherwise the agent answers without a proof reference.
+
+Pushes to `main` or `master` auto-deploy through [.github/workflows/fly-deploy.yml](.github/workflows/fly-deploy.yml), which runs `flyctl deploy --remote-only` using the `FLY_API_TOKEN` repository secret. Create that token with `flyctl tokens create deploy` and add it under the repository's Actions secrets.
 
 Use test registrations for placeholder proofs and failure experiments. Do not treat `reference-test-v1` metadata as a verified cryptographic proof.
+
+## Register with Agent Games
+
+1. **Register the `/agent` URL, not the bare domain.** The platform POSTs the signed preflight and match requests to the exact endpoint you register, and the agent only serves `POST /agent`. Register `https://<app>.fly.dev/agent` — a bare domain returns 404 and the preflight fails.
+2. **Register the VFY verification key.** Export it from the committed proving key and register it on zkVerify (via Kurier); set the returned hash as `ZKVERIFY_VFY_VK_HASH`.
+
+   ```sh
+   npx snarkjs zkey export verificationkey circuits/vfy-policy/vfy-policy.zkey vfy-vkey.json
+   ```
+
+   The exported `*vkey*.json` is public and re-derivable, so it is git-ignored and never committed.
+3. **Register the strategy commitment.** Run `npm run commitment` (with your `.env` loaded) and register the printed `poseidonCommitmentHash`, `circuitVersion`, and `policyVersion`. Register the Poseidon hash — not the SHA-256 placeholder, which is for practice turns only. The commitment binds your policy for a whole match and cannot change mid-game, so regenerate and re-register it whenever `AGENT_GAMES_HMAC_SECRET` is rotated.
 
 ## Documentation
 
