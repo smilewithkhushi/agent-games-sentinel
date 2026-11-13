@@ -38,9 +38,11 @@ export const gatekeeperSchema = z.strictObject({
 export type Gatekeeper = z.infer<typeof gatekeeperSchema>;
 export const preflightSchema = z.strictObject({
   type: z.literal('agent-games.preflight.v1'),
-  agent_id: z.uuid(),
+  // Docs show prefixed/opaque ids (e.g. "agt_...", nonce "abc123"), while some
+  // platform builds send UUIDs. Accept any non-empty identifier to match both.
+  agent_id: identifier,
   issued_at: datetime,
-  nonce: z.uuid(),
+  nonce: identifier,
 });
 const state = {
   selfBalance: decimal,
@@ -55,7 +57,9 @@ const vfyEnvelope = {
   turn: z.number().int().min(1).max(20),
   issuedAt: datetime,
   deadlineAt: datetime,
-  resolverVersion: z.literal('v1-draft'),
+  // Platform source emits 'v1-draft'; the build spec documents 'v1'. Accept both
+  // so a version bump on the platform side cannot reject every turn.
+  resolverVersion: z.enum(['v1', 'v1-draft']),
   nonce: z.uuid(),
 };
 export const vfySchema = z.discriminatedUnion('mode', [
