@@ -59,6 +59,28 @@ for (const mode of ['practice', 'competition'] as const) {
         });
     }
 }
+test('competition VFY carries an inline Groth16 proof + public_signals that cryptographically verify', async (t) => {
+    const { computePoseidonCommitment } = await import('../src/proof.js');
+    const snarkjsModule: any = await import('snarkjs');
+    const snarkjs = snarkjsModule.default ?? snarkjsModule;
+    const app = setup();
+    t.after(() => app.close());
+    // The platform freezes the Poseidon commitment it was registered with; the circuit proves the
+    // action is the committed strategy's output, so the request commitment must be our Poseidon hash.
+    const commitment = await computePoseidonCommitment(secret);
+    const base = vfy('competition', '100', '100');
+    const res = await send(app, { ...base, strategyCommitment: { hash: commitment } });
+    assert.equal(res.statusCode, 200);
+    checkSignature(res);
+    const response = competitionSchema.parse(res.json());
+    assert.deepEqual(response.action, { type: 'EXTRACT', amount: 10 });
+    // The inline proof is mandatory for a scored turn (omitting it is the #1 cause of lost turns).
+    assert.ok(response.policyProof.proof, 'policyProof.proof must be present');
+    assert.ok(Array.isArray(response.policyProof.public_signals) && response.policyProof.public_signals.length > 0);
+    const vkey = await snarkjs.zKey.exportVerificationKey('circuits/vfy-policy/vfy-policy.zkey');
+    const verified = await snarkjs.groth16.verify(vkey, response.policyProof.public_signals, response.policyProof.proof);
+    assert.equal(verified, true, 'inline Groth16 proof must verify against the circuit vk');
+});
 test('VFY keeps UUID, timestamp, body and signature stable through regenerated delivery nonces and simultaneous instances', async (t) => {
     const store = new MemoryStore();
     const a = setup(store);

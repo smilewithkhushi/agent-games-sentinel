@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+// Platform circuit verification-key hash, registered on zkVerify mainnet (Agent Games build
+// playbook). It is public and shared by all agents using the platform's vfy-policy circuit.
+// Defaulting here makes a stale/placeholder env value (e.g. 'your_hash_here') self-heal instead
+// of silently disabling the on-chain proof anchor.
+const DEFAULT_ZKVERIFY_VFY_VK_HASH =
+  '0x6c56509f1c56fd1fd4e9737f906d2220f4b95f1d507f1adf6899085bd74be047';
+const vkHash = z.string().optional().transform((v) =>
+  v && /^0x[a-f0-9]{64}$/i.test(v) ? v : DEFAULT_ZKVERIFY_VFY_VK_HASH);
+
 const schema = z.object({
   AGENT_GAMES_HMAC_SECRET: z.string().min(1),
   REFERENCE_AGENT_MODE: z.enum(['normal', 'late', 'invalid_signature', 'invalid_json']).default('normal'),
@@ -10,7 +19,7 @@ const schema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   KURIER_API_KEY: z.string().optional(),
-  ZKVERIFY_VFY_VK_HASH: z.string().optional(),
+  ZKVERIFY_VFY_VK_HASH: vkHash,
 });
 export type Config = z.infer<typeof schema>;
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {

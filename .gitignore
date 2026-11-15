@@ -8,6 +8,7 @@ coverage/
 
 # Dev notes (not part of the project)
 info/
+self/
 
 # OS noise
 .DS_Store
