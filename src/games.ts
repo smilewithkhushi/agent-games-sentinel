@@ -120,6 +120,9 @@ export function publicInputsHash(
 
 export type VfyResponseContext = {
   hmacSecret: string;
+  // Salt source for the Poseidon commitment/proof. Falls back to hmacSecret. Pin this to the secret
+  // behind the platform-registered commitment so signing-secret rotations don't break proofs.
+  commitmentSecret?: string;
   kurierApiKey?: string;
   zkverifyVfyVkHash?: string;
 };
@@ -152,7 +155,9 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
       action: action.type,
       amount: action.type === 'EXTRACT' ? action.amount : 0,
       circuitVersion: CIRCUIT_VERSION,
-      hmacSecret: ctx.hmacSecret,
+      // Salt derives from the commitment secret (falls back to the signing secret) so the proof
+      // binds to the platform-registered commitment even after a signing-secret rotation.
+      hmacSecret: ctx.commitmentSecret ?? ctx.hmacSecret,
     });
     if (proof) {
       proofFields = { proof: proof.proof, public_signals: proof.publicSignals };

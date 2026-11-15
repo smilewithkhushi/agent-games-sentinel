@@ -20,6 +20,11 @@ const schema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   KURIER_API_KEY: z.string().optional(),
   ZKVERIFY_VFY_VK_HASH: vkHash,
+  // Salt source for the VFY Poseidon strategy commitment. Defaults to AGENT_GAMES_HMAC_SECRET, but
+  // can be pinned separately so rotating the signing secret never changes (and thus never
+  // invalidates) the registered commitment. Set this to the secret that produced the commitment
+  // currently registered on the platform.
+  VFY_COMMITMENT_SECRET: z.string().optional(),
 });
 export type Config = z.infer<typeof schema>;
 export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {

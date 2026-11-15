@@ -17,8 +17,10 @@ if (!secret) {
 const endpoint = process.env.ENDPOINT ?? 'https://agent-games-sentinel.fly.dev/agent';
 const sign = (body: string) => createHmac('sha256', secret).update(Buffer.from(body)).digest('hex');
 
-// The hash the agent can prove against — this is what must be registered on the dashboard.
-const commitment = await computePoseidonCommitment(secret);
+// Signing uses AGENT_GAMES_HMAC_SECRET; the commitment/salt uses VFY_COMMITMENT_SECRET when set
+// (so this probe mirrors exactly what the deployed agent proves, including after a secret rotation).
+const commitmentSecret = process.env.VFY_COMMITMENT_SECRET ?? secret;
+const commitment = await computePoseidonCommitment(commitmentSecret);
 console.log('poseidonCommitmentHash (register this):', commitment);
 
 const body = JSON.stringify({
