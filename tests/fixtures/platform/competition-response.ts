@@ -13,6 +13,21 @@ export const responseSchema = z
     policyProof: z
       .object({
         circuitVersion: z.string().regex(/^[a-z0-9][a-z0-9._-]{0,63}$/i),
+        // The live playbook requires the inline Groth16 proof + public_signals on a scored
+        // turn (omitting them is the #1 cause of lost turns). They are modelled optional here
+        // only so contract tests that run without a matching Poseidon commitment still parse;
+        // the happy-path proof is asserted explicitly in platform.test.ts.
+        proof: z
+          .object({
+            pi_a: z.array(z.string()),
+            pi_b: z.array(z.array(z.string())),
+            pi_c: z.array(z.string()),
+            protocol: z.literal('groth16'),
+            curve: z.literal('bn128'),
+          })
+          .strict()
+          .optional(),
+        public_signals: z.array(z.string()).optional(),
         proofReference: z.string().max(512).optional(),
         publicInputsHash: z.string().regex(/^0x[a-f0-9]{64}$/i),
       })

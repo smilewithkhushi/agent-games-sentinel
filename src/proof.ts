@@ -125,7 +125,12 @@ export async function generateVfyProof(params: {
       amount: params.amount.toString(),
       circuitVersion: (VFY_CIRCUIT_VERSION_INTEGERS[params.circuitVersion] ?? 1n).toString(),
     };
-    const snarkjs = (await import('snarkjs')).default;
+    // snarkjs is CommonJS: under some ESM loaders `.default` is undefined and the API lives on
+    // the namespace. Fall back so proof generation does not silently fail with
+    // "Cannot read properties of undefined (reading 'groth16')".
+    const snarkjsModule = await import('snarkjs');
+    const snarkjs = ((snarkjsModule as unknown as { default?: typeof snarkjsModule }).default
+      ?? snarkjsModule) as typeof snarkjsModule;
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(inputs, VFY_WASM, VFY_ZKEY);
     // publicSignals order matches the circuit's public output then inputs: proofTag is last.
     const proofTagDecimal = publicSignals[publicSignals.length - 1]!;

@@ -137,8 +137,12 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
     action, commitment,
   );
 
-  let proofReference: string | undefined;
-  if (task.mode === 'competition' && ctx?.hmacSecret && ctx.kurierApiKey && ctx.zkverifyVfyVkHash) {
+  // Competition turns MUST carry the inline Groth16 proof and public_signals: the platform
+  // independently re-verifies them against the committed strategy, and omitting them is the
+  // #1 cause of lost turns (Agent Games build playbook). This is independent of Kurier — the
+  // on-chain proofReference is an optional anchor layered on top when Kurier is configured.
+  let proofFields: { proof?: object; public_signals?: string[]; proofReference?: string } = {};
+  if (task.mode === 'competition' && ctx?.hmacSecret) {
     const proof = await generateVfyProof({
       commitment,
       matchId: task.matchId,
@@ -151,9 +155,13 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
       hmacSecret: ctx.hmacSecret,
     });
     if (proof) {
-      proofReference = await submitToKurier(
-        proof.proof, proof.publicSignals, ctx.zkverifyVfyVkHash, ctx.kurierApiKey,
-      ) ?? undefined;
+      proofFields = { proof: proof.proof, public_signals: proof.publicSignals };
+      if (ctx.kurierApiKey && ctx.zkverifyVfyVkHash) {
+        const reference = await submitToKurier(
+          proof.proof, proof.publicSignals, ctx.zkverifyVfyVkHash, ctx.kurierApiKey,
+        );
+        if (reference) proofFields.proofReference = reference;
+      }
     }
   }
 
@@ -164,7 +172,7 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
     policyProof: {
       circuitVersion: CIRCUIT_VERSION,
       publicInputsHash: hash,
-      ...(proofReference !== undefined ? { proofReference } : {}),
+      ...proofFields,
     },
   };
 
