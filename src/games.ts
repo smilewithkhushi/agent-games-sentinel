@@ -170,7 +170,10 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
     }
   }
 
-  const response = {
+  // The live platform requires agentTimestamp + idempotencyKey on BOTH practice and competition
+  // responses (practice diagnostic 2026-11-15 rejected their absence). Generated once per cache
+  // key, so retries stay byte-identical.
+  return {
     matchId: task.matchId,
     turn: task.turn,
     action,
@@ -179,11 +182,6 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
       publicInputsHash: hash,
       ...proofFields,
     },
-  };
-
-  // Practice's strict platform schema forbids competition-only metadata.
-  return task.mode === 'practice' ? response : {
-    ...response,
     agentTimestamp: new Date().toISOString(),
     idempotencyKey: randomUUID(),
   };

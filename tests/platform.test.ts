@@ -52,10 +52,9 @@ for (const mode of ['practice', 'competition'] as const) {
             assert.deepEqual(response.action, action);
             assert.equal(response.policyProof.circuitVersion, 'v1');
             assert.match(response.policyProof.publicInputsHash, /^0x[a-f0-9]{64}$/);
-            if (mode === 'practice')
-                assert.equal('agentTimestamp' in res.json(), false);
-            else
-                assert.ok(Math.abs(Date.parse(res.json().agentTimestamp) - Date.now()) < 5000);
+            // Both practice and competition now carry agentTimestamp + idempotencyKey (live
+            // platform contract, practice diagnostic 2026-11-15).
+            assert.ok(Math.abs(Date.parse(res.json().agentTimestamp) - Date.now()) < 5000);
         });
     }
 }
