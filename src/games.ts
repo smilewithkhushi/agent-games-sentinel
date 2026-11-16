@@ -120,6 +120,9 @@ export function publicInputsHash(
 
 export type VfyResponseContext = {
   hmacSecret: string;
+  // Salt source for the Poseidon commitment/proof. Falls back to hmacSecret. Pin this to the secret
+  // behind the platform-registered commitment so signing-secret rotations don't break proofs.
+  commitmentSecret?: string;
   kurierApiKey?: string;
   zkverifyVfyVkHash?: string;
 };
@@ -152,7 +155,9 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
       action: action.type,
       amount: action.type === 'EXTRACT' ? action.amount : 0,
       circuitVersion: CIRCUIT_VERSION,
-      hmacSecret: ctx.hmacSecret,
+      // Salt derives from the commitment secret (falls back to the signing secret) so the proof
+      // binds to the platform-registered commitment even after a signing-secret rotation.
+      hmacSecret: ctx.commitmentSecret ?? ctx.hmacSecret,
     });
     if (proof) {
       proofFields = { proof: proof.proof, public_signals: proof.publicSignals };
@@ -165,7 +170,10 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
     }
   }
 
-  const response = {
+  // The live platform requires agentTimestamp + idempotencyKey on BOTH practice and competition
+  // responses (practice diagnostic 2026-11-15 rejected their absence). Generated once per cache
+  // key, so retries stay byte-identical.
+  return {
     matchId: task.matchId,
     turn: task.turn,
     action,
@@ -174,11 +182,6 @@ export async function createVfyResponse(task: VfyRequest, ctx?: VfyResponseConte
       publicInputsHash: hash,
       ...proofFields,
     },
-  };
-
-  // Practice's strict platform schema forbids competition-only metadata.
-  return task.mode === 'practice' ? response : {
-    ...response,
     agentTimestamp: new Date().toISOString(),
     idempotencyKey: randomUUID(),
   };

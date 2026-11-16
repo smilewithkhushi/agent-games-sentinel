@@ -30,6 +30,7 @@ export function buildApp(config: Config, options: { store?: ReplayStore; logger?
   app.get('/health', async () => ({ ok: true }));
   const vfyCtx = {
     hmacSecret: config.AGENT_GAMES_HMAC_SECRET,
+    commitmentSecret: config.VFY_COMMITMENT_SECRET,
     kurierApiKey: config.KURIER_API_KEY,
     zkverifyVfyVkHash: config.ZKVERIFY_VFY_VK_HASH,
   };

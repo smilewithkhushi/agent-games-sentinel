@@ -18,6 +18,7 @@
     "play": "node --import tsx scripts/play.ts",
     "play:gatekeeper": "node --import tsx scripts/play.ts gatekeeper",
     "commitment": "node --env-file-if-exists=.env --import tsx scripts/commitment.ts",
+    "probe:vfy": "node --env-file-if-exists=.env --import tsx scripts/probe-vfy.ts",
     "test:http": "node --import tsx --test tests/integration/http.test.ts"
   },
   "dependencies": {

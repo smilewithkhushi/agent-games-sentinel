@@ -3,7 +3,10 @@ import { computePoseidonCommitment } from '../src/proof.js';
 import { readConfig } from '../src/config.js';
 
 const config = readConfig();
-const poseidonCommitment = await computePoseidonCommitment(config.AGENT_GAMES_HMAC_SECRET);
+// The commitment binds to VFY_COMMITMENT_SECRET when set (decoupled from the signing secret),
+// otherwise to AGENT_GAMES_HMAC_SECRET.
+const commitmentSecret = config.VFY_COMMITMENT_SECRET ?? config.AGENT_GAMES_HMAC_SECRET;
+const poseidonCommitment = await computePoseidonCommitment(commitmentSecret);
 
 console.log(JSON.stringify({
   circuitVersion: CIRCUIT_VERSION,
